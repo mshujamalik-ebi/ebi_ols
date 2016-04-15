@@ -1,0 +1,161 @@
+<?php
+define('OLS_URL', 'http://www.ebi.ac.uk/ols/beta/api/ontologies');
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function ebi_ols_field_widget_info() {
+  return array(
+    'ebi_ols_textfield' => array(
+      'label' => t('Ontology Lookup Service'),
+      'field types' => array('text'),
+      'settings' => array('ontology' => ''),
+      'weight' => 2,
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function ebi_ols_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $base) {
+  $element = $base;
+  $settings = $instance['widget']['settings'];
+  $element += array(
+    '#type' => 'textfield',
+    '#default_value' => isset($items[$delta]) ? $items[$delta]['value'] : '',
+    //'#size' => $instance['widget']['settings']['size'],
+    '#element_validate' => array('ebi_ols_element_validate'),
+    '#attributes' => array(
+      'class' => array('ols-autocomplete'),
+      'ontology' => array($settings['ontology']),
+    ),
+    '#suffix' => '</div>',
+  );
+  drupal_add_library('system', 'ui.autocomplete');
+  drupal_add_js(drupal_get_path('module', 'ebi_ols') . '/ebi_ols.js');
+  return array('value' => $element);
+}
+
+/**
+ * Implements hook_field_widget_settings_form().
+ */
+function ebi_ols_field_widget_settings_form($field, $instance) {
+  $widget = $instance['widget'];
+  $settings = $widget['settings'];
+  $options = array();
+  $request = drupal_http_request(constant('OLS_URL') . '?size=10000000');
+  if (json_decode($request->data)) {
+    $data = json_decode($request->data);
+    $ontologies = $data->_embedded->ontologies;
+    foreach($ontologies as $ontology) {
+      $options[$ontology->config->namespace] = $ontology->config->preferredPrefix . ': ' . $ontology->config->title;
+    }
+  }
+  else {
+    drupal_set_message(t('An error occurred with EBI Ontology Lookup Service.'), 'error');
+  }
+  $form['ontology'] = array(
+    '#type' => 'select',
+    '#title' => t('Ontology in OLS'),
+    '#options' => $options,
+    '#description' => t('Select one from the list of all ontologies in OLS'),
+    '#default_value' => $settings['ontology'],
+    '#required' => TRUE,
+  );
+  return $form;
+}
+
+/**
+ * Implements hook_field_widget_error().
+ */
+function ebi_ols_field_widget_error($element, $error, $form, &$form_state) {
+  form_error($element, $error['message']);
+}
+
+function ebi_ols_element_validate($element, &$form_state, $form) {
+  $value = $element['#value'];
+  if ($value) {
+    $pieces = explode(":", $value);
+    $iri = $pieces[1] . ':' . $pieces[2];
+    $ols_url = constant('OLS_URL') . '/' . $pieces[0] . '/terms/' . urlencode(urlencode($iri));
+    $request = drupal_http_request($ols_url);
+    if (json_decode($request->data)) {
+      $data = json_decode($request->data);
+      if ($data->error) {
+        drupal_add_library('system', 'ui.autocomplete');
+        drupal_add_js(drupal_get_path('module', 'ebi_ols') . '/ebi_ols.js');
+        form_set_error($element['#field_name'] . '][' . $element['#language'] . '][' . $element['#delta'], $message = t('Ontology error: ') . t($data->message));
+      }
+    }
+    else {
+      form_set_error('field_edam', $message = t('An error occurred with EBI Ontology Lookup Service.'));
+    }
+  }
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function ebi_ols_field_formatter_info() {
+  return array(
+    'ebi_ols_default' => array(
+      'label' => t('EBI Ontology Lookup Service'),
+      'description' => 'Display text field with Ontology Lookup Service.',
+      'field types' => array('text'),
+      'weight' => 2,
+      'settings' => array(
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function ebi_ols_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  $settings = $display['settings'];
+  switch ($display['type']) {
+    case 'ebi_ols_default':
+      foreach ($items as $delta => $item) {
+        $element[$delta] = array(
+          '#theme' => 'ebi_ols_formatter_default',
+          '#item' => $item,
+        );
+      }
+      break;
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function ebi_ols_theme() {
+  $theme = array(
+    'ebi_ols_formatter_default' => array(
+      'variables' => array(
+        'item' => NULL,
+      ),
+    ),
+  );
+  return $theme;
+}
+
+function theme_ebi_ols_formatter_default($variables) {
+  if ($variables['item']['safe_value']) {
+    $pieces = explode(":", $variables['item']['safe_value']);
+    $iri = $pieces[1] . ':' . $pieces[2];
+    $ols_url = constant('OLS_URL') . '/' . $pieces[0] . '/terms/' . urlencode(urlencode($iri));
+    $options = array(
+      'attributes' => array(
+        'class'=> array('ebi_ols_formatter_default'),
+        'ols_url' => array($ols_url),
+      ),
+    );
+    drupal_add_library('system', 'ui.autocomplete');
+    drupal_add_js(drupal_get_path('module', 'ebi_ols') . '/ebi_ols.js');
+    return l($variables['item']['safe_value'], $iri, $options);
+  }
+}

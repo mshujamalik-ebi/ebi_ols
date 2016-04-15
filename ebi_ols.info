@@ -1,0 +1,4 @@
+name = EBI Ontology Lookup Service
+description = An Ontology Lookup Service autocomplete widget and a Ontology display for text field.
+
+core = "7.x"
