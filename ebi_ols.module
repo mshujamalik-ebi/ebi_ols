@@ -1,5 +1,5 @@
 <?php
-define('OLS_URL', 'http://www.ebi.ac.uk/ols/beta/api/ontologies');
+define('OLS_URL', 'http://www.ebi.ac.uk/ols/api/ontologies');
 
 /**
  * Implements hook_field_widget_info().
