@@ -21,7 +21,7 @@ Drupal.behaviors.ebi_ols = {
     $.ui.autocomplete.prototype._renderItem = function (ul, item) {
       return $("<li></li>").data("item.autocomplete", item).append("<a>" + item.label + "</a>").appendTo(ul);
     };
-    var URL_PREFIX = "http://www.ebi.ac.uk/ols/api/select?ontology=";
+    var URL_PREFIX = "http://www.ebi.ac.uk/ols/api/select?type=class&ontology=";
     $context.find('input.ols-autocomplete').autocomplete ({
       source: function (request, response) {
         var ontology = this.element.attr('ontology');

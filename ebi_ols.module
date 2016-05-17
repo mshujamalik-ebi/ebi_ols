@@ -82,7 +82,7 @@ function ebi_ols_element_validate($element, &$form_state, $form) {
     $request = drupal_http_request($ols_url);
     if (json_decode($request->data)) {
       $data = json_decode($request->data);
-      if ($data->error) {
+      if (isset($data->error)) {
         drupal_add_library('system', 'ui.autocomplete');
         drupal_add_js(drupal_get_path('module', 'ebi_ols') . '/ebi_ols.js');
         form_set_error($element['#field_name'] . '][' . $element['#language'] . '][' . $element['#delta'], $message = t('Ontology error: ') . t($data->message));
