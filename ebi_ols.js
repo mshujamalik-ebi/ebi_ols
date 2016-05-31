@@ -25,7 +25,7 @@ Drupal.behaviors.ebi_ols = {
     $context.find('input.ols-autocomplete').autocomplete ({
       source: function (request, response) {
         var ontology = this.element.attr('ontology');
-        var URL = URL_PREFIX + this.element.attr('ontology') + "&rows=1000&q=" + this.element.val();
+        var URL = URL_PREFIX + this.element.attr('ontology') + "&sort=label desc&rows=1000&q=" + this.element.val();
         $.ajax({
           url : URL,
           success : function(data) {

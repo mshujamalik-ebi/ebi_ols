@@ -87,6 +87,26 @@ function ebi_ols_element_validate($element, &$form_state, $form) {
         drupal_add_js(drupal_get_path('module', 'ebi_ols') . '/ebi_ols.js');
         form_set_error($element['#field_name'] . '][' . $element['#language'] . '][' . $element['#delta'], $message = t('Ontology error: ') . t($data->message));
       }
+      elseif ($data->is_obsolete) {
+        $message = $value . t(' is obsolete.');
+        if (property_exists($data, 'annotation')) {
+          $replace = '';
+          if (property_exists($data->annotation, 'replacedBy')) {
+            $replace = implode(",",  $data->annotation->replacedBy);
+          }
+          if ($replace != '') {
+            $message .= ' Replaced by: ' . $replace;
+          }
+          $consider = '';
+          if (property_exists($data->annotation, 'consider')) {
+            $consider = implode(',',  $data->annotation->consider);
+          }
+        }
+        if ($consider != '') {
+          $message .= ' Please consider: ' . $consider;
+        }
+        form_set_error($element['#field_name'] . '][' . $element['#language'] . '][' . $element['#delta'], $message);
+      }
     }
     else {
       form_set_error('field_edam', $message = t('An error occurred with EBI Ontology Lookup Service.'));
