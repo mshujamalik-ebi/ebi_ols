@@ -35,8 +35,8 @@ function ebi_ols_requirements($phase) {
               if ($msg != '') {
                 $requirements['ebi_ols'] = array(
                   'title' => t('EBI Ontology Lookup Service'),
-                  'value' => $msg,
-                  'description' => t('Obsoletes report'),
+                  'value' => t('Some terms are obsolete'),
+                  'description' => $msg,
                   'severity' => REQUIREMENT_ERROR,
                 );
               }
@@ -44,8 +44,8 @@ function ebi_ols_requirements($phase) {
             else {
               $requirements['ebi_ols'] = array(
                 'title' => t('EBI Ontology Lookup Service'),
-                'value' => t('http://www.ebi.ac.uk/ols/api is not available!'),
-                'description' => t(''),
+                'value' => t('Not available'),
+                'description' => t('Please check http://www.ebi.ac.uk/ols/api. '),
                 'severity' => REQUIREMENT_WARNING,
               );     
             }
