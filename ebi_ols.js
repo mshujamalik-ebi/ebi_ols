@@ -15,10 +15,12 @@ Drupal.behaviors.ebi_ols = {
       $.ajax({
         url : iriToURL($(element).val()),
         success : function(data) {
+          var term = data.label;
           if (data.hasOwnProperty('is_obsolete')) {
+            term = term + ' <span class="marker">obsolete</span>';
           }
           $(element).siblings('.edam-tag').remove();
-          $(element).after("<div class='edam-tag'>" + data.label + "</div>");
+          $(element).after("<div class='edam-tag'>" + term + "</div>");
         },
         dataType : 'json',
       });
