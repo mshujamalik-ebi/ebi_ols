@@ -16,7 +16,7 @@ Drupal.behaviors.ebi_ols = {
         url : iriToURL($(element).val()),
         success : function(data) {
           var term = data.label;
-          if (data.hasOwnProperty('is_obsolete')) {
+          if (data.is_obsolete) {
             term = term + ' <span class="marker">obsolete</span>';
           }
           $(element).siblings('.edam-tag').remove();
