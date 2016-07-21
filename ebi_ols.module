@@ -2,6 +2,67 @@
 define('OLS_URL', 'http://www.ebi.ac.uk/ols/api/ontologies');
 
 /**
+ * Implements hook_menu().
+ */
+function ebi_ols_menu() {
+  $items['admin/config/services/ebi_ols'] = array(
+    'title' => 'EBI Ontology Lookup Service',
+    'description' => 'Content with obsolete terms. ',
+    'page callback' => 'ebi_ols_report',
+    'page arguments' => array('transliteration_retroactive'),
+    'access arguments' => array('administer nodes'),
+    'weight' => 10,
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+function ebi_ols_report() {
+  $field_info = field_info_fields();
+  foreach($field_info as $field) {
+    foreach($field['bundles'] as $entity_type => $bundles){
+      foreach($bundles as $bundle){
+        $field_setting = field_info_instance($entity_type, $field['field_name'], $bundle);
+        if ($field_setting['widget']['module'] == 'ebi_ols') {
+          $storage = $field['storage']['details']['sql']['FIELD_LOAD_CURRENT'];
+          foreach($storage as $table=>$column) {
+            $db_table = $table;
+            $db_col = $column['value'];
+          }
+          $ontology = $field_setting['widget']['settings']['ontology'];
+          $request = drupal_http_request('http://www.ebi.ac.uk/ols/api/search?rows=10000&obsoletes=true&q=*&ontology=' . $ontology. '&type=class');
+          if (json_decode($request->data)) {
+            $terms = array();
+            $data = json_decode($request->data);
+            foreach ($data->response->docs as $index=>$doc) {
+              $term[] = $doc->id;
+            }
+            $result = db_select($db_table, 'f')
+              ->fields('f')
+              ->condition($db_col, $term,'IN')
+              ->execute();
+            $header = array('Content', 'Obsolete terms');
+            $rows = array();
+            while($record = $result->fetchAssoc()) {
+              $entity = l($record['entity_type'] . ' ' . $record['entity_id'], $record['entity_type'] . '/' . $record['entity_id']);
+              $row =  array($entity, $record[$db_col]);
+              $rows[] = $row;
+            }
+            if ($rows) {
+              drupal_set_message(t('Obsolete terms in these content need to be updated.'), $type = 'warning');
+            }
+          }
+          else {
+            drupal_set_message(t('EBI Ontology Lookup Service is not available. Please check http://www.ebi.ac.uk/ols/api.'), $type = 'error');
+          }
+        }
+      }
+    }
+  }
+  return theme('table', array('header' => $header, 'rows' => $rows));
+}
+
+/**
  * Implements hook_field_widget_info().
  */
 function ebi_ols_field_widget_info() {
@@ -59,7 +120,7 @@ function ebi_ols_field_widget_settings_form($field, $instance) {
     '#type' => 'select',
     '#title' => t('Ontology in OLS'),
     '#options' => $options,
-    '#description' => t('Select one from the list of all ontologies in OLS'),
+    '#description' => t('Don\'t change it after you save settings. Otherwise the obelete report will not work properly. '),
     '#default_value' => $settings['ontology'],
     '#required' => TRUE,
   );
