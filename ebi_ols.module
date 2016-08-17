@@ -1,6 +1,15 @@
 <?php
 define('OLS_URL', 'http://www.ebi.ac.uk/ols/api/ontologies');
 
+function ebi_ols_permission() {
+  return array(
+    'access obselete report' => array(
+      'title' => t('Access obselete report'),
+      'description' => t('Access report page of obselete terms.'),
+    ),
+  );
+}
+
 /**
  * Implements hook_menu().
  */
@@ -10,8 +19,7 @@ function ebi_ols_menu() {
     'description' => 'Content with obsolete terms. ',
     'page callback' => 'ebi_ols_report',
     'page arguments' => array('transliteration_retroactive'),
-    'access arguments' => array('administer nodes'),
-    'weight' => 10,
+    'access arguments' => array('access obselete report'),
     'type' => MENU_NORMAL_ITEM,
   );
   return $items;
