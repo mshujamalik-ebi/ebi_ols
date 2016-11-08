@@ -98,6 +98,7 @@ function ebi_ols_field_widget_form(&$form, &$form_state, $field, $instance, $lan
     '#attributes' => array(
       'class' => array('ols-autocomplete'),
       'ontology' => array($settings['ontology']),
+      'ancestor' => array($settings['ancestor']),
     ),
     '#suffix' => '</div>',
   );
@@ -131,6 +132,15 @@ function ebi_ols_field_widget_settings_form($field, $instance) {
     '#description' => t('Don\'t change it after you save settings. Otherwise the obelete report will not work properly. '),
     '#default_value' => $settings['ontology'],
     '#required' => TRUE,
+    //'#weight' => 1,
+  );
+  $form['ancestor']= array(
+    '#type' => 'textfield',
+    '#title' => t('Ontology in OLS'),
+    '#description' => t('You can restrict a search to all children of a given term, for example "EDAM Topic": http://edamontology.org/topic_0003. '),
+    '#default_value' => $settings['ancestor'],
+    '#required' => FALSE,
+    //'#weight' => 2,
   );
   return $form;
 }
