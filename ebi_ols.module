@@ -26,6 +26,7 @@ function ebi_ols_menu() {
 }
 
 function ebi_ols_report() {
+  $row = array();
   $field_info = field_info_fields();
   foreach($field_info as $field) {
     foreach($field['bundles'] as $entity_type => $bundles){
@@ -50,7 +51,6 @@ function ebi_ols_report() {
               ->condition($db_col, $term,'IN')
               ->execute();
             $header = array('Content', 'Obsolete terms');
-            $rows = array();
             while($record = $result->fetchAssoc()) {
               $entity = l($record['entity_type'] . ' ' . $record['entity_id'], $record['entity_type'] . '/' . $record['entity_id']);
               $row =  array($entity, $record[$db_col]);
