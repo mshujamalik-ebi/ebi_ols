@@ -26,7 +26,8 @@ function ebi_ols_menu() {
 }
 
 function ebi_ols_report() {
-  $row = array();
+  $rows = array();
+  $fields = array();
   $field_info = field_info_fields();
   foreach($field_info as $field) {
     foreach($field['bundles'] as $entity_type => $bundles){
@@ -35,36 +36,37 @@ function ebi_ols_report() {
         if ($field_setting['widget']['module'] == 'ebi_ols') {
           $storage = $field['storage']['details']['sql']['FIELD_LOAD_CURRENT'];
           foreach($storage as $table=>$column) {
-            $db_table = $table;
-            $db_col = $column['value'];
-          }
-          $ontology = $field_setting['widget']['settings']['ontology'];
-          $request = drupal_http_request('http://www.ebi.ac.uk/ols/api/search?rows=10000&obsoletes=true&q=*&ontology=' . $ontology. '&type=class');
-          if (json_decode($request->data)) {
-            $terms = array();
-            $data = json_decode($request->data);
-            foreach ($data->response->docs as $index=>$doc) {
-              $term[] = $doc->id;
-            }
-            $result = db_select($db_table, 'f')
-              ->fields('f')
-              ->condition($db_col, $term,'IN')
-              ->execute();
-            $header = array('Content', 'Obsolete terms');
-            while($record = $result->fetchAssoc()) {
-              $entity = l($record['entity_type'] . ' ' . $record['entity_id'], $record['entity_type'] . '/' . $record['entity_id']);
-              $row =  array($entity, $record[$db_col]);
-              $rows[] = $row;
-            }
-            if ($rows) {
-              drupal_set_message(t('Obsolete terms in these content need to be updated.'), $type = 'warning');
-            }
-          }
-          else {
-            drupal_set_message(t('EBI Ontology Lookup Service is not available. Please check http://www.ebi.ac.uk/ols/api.'), $type = 'error');
+            $fields[] = array(
+              'db_table' => $table,
+              'db_col' => $column['value'],
+              'ontology' => $field_setting['widget']['settings']['ontology'],
+            );
           }
         }
       }
+    }
+  }
+  foreach (array_unique($fields, SORT_REGULAR) as $check) {
+    $request = drupal_http_request('http://www.ebi.ac.uk/ols/api/search?rows=10000&obsoletes=true&q=*&ontology=' . $check['ontology'] . '&type=class');
+    if (json_decode($request->data)) {
+      $terms = array();
+      $data = json_decode($request->data);
+      foreach ($data->response->docs as $index=>$doc) {
+        $term[] = $doc->id;
+      }
+      $result = db_select($check['db_table'], 'f')
+        ->fields('f')
+        ->condition($check['db_col'], $term,'IN')
+        ->execute();
+      $header = array('Content', 'Obsolete terms');
+      while($record = $result->fetchAssoc()) {
+        $entity = l($record['entity_type'] . ' ' . $record['entity_id'], $record['entity_type'] . '/' . $record['entity_id']);
+        $row =  array($entity, $record[$check['db_col']]);
+        $rows[] = $row;
+      }
+    }
+    else {
+      drupal_set_message(t('EBI Ontology Lookup Service is not available. Please check http://www.ebi.ac.uk/ols/api.'), $type = 'error');
     }
   }
   return theme('table', array('header' => $header, 'rows' => $rows));
