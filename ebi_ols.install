@@ -1,4 +1,5 @@
 <?php
+/*
 function ebi_ols_requirements($phase) {
   $requirements = array();
   if ($phase == 'runtime') {
@@ -56,3 +57,4 @@ function ebi_ols_requirements($phase) {
     return $requirements;
   }
 }
+*/
