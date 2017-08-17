@@ -43,13 +43,16 @@ Drupal.behaviors.ebi_ols = {
           url : URL,
           success : function(data) {
             var suggestions = [];
+            var count = 0;
             $.each(data.highlighting, function(key, value) {
               if (value.label_autosuggest) {
                 var label = value.label_autosuggest.join();
                 if (value.synonym_autosuggest) {
                   label = label + ' (' + value.synonym_autosuggest.join() + ')';
                 }
-                suggestions.push({value: key, label: label});
+                var id = data.response.docs[count].ontology_name + ':' + data.response.docs[count].iri;
+                suggestions.push({value: id, label: label});
+								count++
               } else {
                 return false;
               }
