@@ -52,7 +52,7 @@ function ebi_ols_report() {
       $terms = array();
       $data = json_decode($request->data);
       foreach ($data->response->docs as $index=>$doc) {
-        $term[] = $doc->id;
+        $term[] = $check['ontology'] . ':' . $doc->iri;
       }
       $result = db_select($check['db_table'], 'f')
         ->fields('f')
@@ -247,16 +247,21 @@ function ebi_ols_theme() {
 function theme_ebi_ols_formatter_default($variables) {
   if ($variables['item']['safe_value']) {
     $pieces = explode(":", $variables['item']['safe_value']);
-    $iri = $pieces[1] . ':' . $pieces[2];
-    $ols_url = constant('OLS_URL') . '/' . $pieces[0] . '/terms/' . urlencode(urlencode($iri));
-    $options = array(
-      'attributes' => array(
-        'class'=> array('ebi_ols_formatter_default'),
-        'ols_url' => array($ols_url),
-      ),
-    );
-    drupal_add_library('system', 'ui.autocomplete');
-    drupal_add_js(drupal_get_path('module', 'ebi_ols') . '/ebi_ols.js');
-    return l($variables['item']['safe_value'], $iri, $options);
+    if (count($pieces) == 3) {
+      $iri = $pieces[1] . ':' . $pieces[2];
+      $ols_url = constant('OLS_URL') . '/' . $pieces[0] . '/terms/' . urlencode(urlencode($iri));
+      $options = array(
+          'attributes' => array(
+              'class' => array('ebi_ols_formatter_default'),
+              'ols_url' => array($ols_url),
+          ),
+      );
+      drupal_add_library('system', 'ui.autocomplete');
+      drupal_add_js(drupal_get_path('module', 'ebi_ols') . '/ebi_ols.js');
+      return l($variables['item']['safe_value'], $iri, $options);
+    }
+    else {
+      return $variables['item']['safe_value'];
+    }
   }
 }
