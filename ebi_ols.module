@@ -1,11 +1,11 @@
 <?php
-define('OLS_URL', 'http://www.ebi.ac.uk/ols/api/ontologies');
+define('OLS_URL', 'https://www.ebi.ac.uk/ols/api');
 
 function ebi_ols_permission() {
   return array(
-    'access obselete report' => array(
-      'title' => t('Access obselete report'),
-      'description' => t('Access report page of obselete terms.'),
+    'access obsolete report' => array(
+      'title' => t('Access obsolete report'),
+      'description' => t('Access report page of obsolete terms.'),
     ),
   );
 }
@@ -19,7 +19,7 @@ function ebi_ols_menu() {
     'description' => 'Content with obsolete terms. ',
     'page callback' => 'ebi_ols_report',
     'page arguments' => array('transliteration_retroactive'),
-    'access arguments' => array('access obselete report'),
+    'access arguments' => array('access obsolete report'),
     'type' => MENU_NORMAL_ITEM,
   );
   return $items;
@@ -47,7 +47,7 @@ function ebi_ols_report() {
     }
   }
   foreach (array_unique($fields, SORT_REGULAR) as $check) {
-    $request = drupal_http_request('http://www.ebi.ac.uk/ols/api/search?rows=10000&obsoletes=true&q=*&ontology=' . $check['ontology'] . '&type=class');
+    $request = drupal_http_request(constant('OLS_URL') . '/search?rows=10000&obsoletes=true&q=*&ontology=' . $check['ontology'] . '&type=class');
     if (json_decode($request->data)) {
       $terms = array();
       $data = json_decode($request->data);
@@ -56,7 +56,7 @@ function ebi_ols_report() {
       }
       $result = db_select($check['db_table'], 'f')
         ->fields('f')
-        ->condition($check['db_col'], $term,'IN')
+        ->condition($check['db_col'], $term, 'IN')
         ->execute();
       $header = array('Content', 'Obsolete terms');
       while($record = $result->fetchAssoc()) {
@@ -66,7 +66,7 @@ function ebi_ols_report() {
       }
     }
     else {
-      drupal_set_message(t('EBI Ontology Lookup Service is not available. Please check http://www.ebi.ac.uk/ols/api.'), $type = 'error');
+      drupal_set_message(t('EBI Ontology Lookup Service is not available. Please check https://www.ebi.ac.uk/ols/api.'), $type = 'error');
     }
   }
   return theme('table', array('header' => $header, 'rows' => $rows));
@@ -116,7 +116,7 @@ function ebi_ols_field_widget_settings_form($field, $instance) {
   $widget = $instance['widget'];
   $settings = $widget['settings'];
   $options = array();
-  $request = drupal_http_request(constant('OLS_URL') . '?size=10000000');
+  $request = drupal_http_request(constant('OLS_URL') . '/ontologies?size=10000000');
   if (json_decode($request->data)) {
     $data = json_decode($request->data);
     $ontologies = $data->_embedded->ontologies;
@@ -155,42 +155,45 @@ function ebi_ols_field_widget_error($element, $error, $form, &$form_state) {
 }
 
 function ebi_ols_element_validate($element, &$form_state, $form) {
+  drupal_add_library('system', 'ui.autocomplete');
+  drupal_add_js(drupal_get_path('module', 'ebi_ols') . '/ebi_ols.js');
   $value = $element['#value'];
   if ($value) {
     $pieces = explode(":", $value);
-    $iri = $pieces[1] . ':' . $pieces[2];
-    $ols_url = constant('OLS_URL') . '/' . $pieces[0] . '/terms/' . urlencode(urlencode($iri));
-    $request = drupal_http_request($ols_url);
-    if (json_decode($request->data)) {
-      $data = json_decode($request->data);
-      if (isset($data->error)) {
-        drupal_add_library('system', 'ui.autocomplete');
-        drupal_add_js(drupal_get_path('module', 'ebi_ols') . '/ebi_ols.js');
-        form_set_error($element['#field_name'] . '][' . $element['#language'] . '][' . $element['#delta'], $message = t('Ontology error: ') . t($data->message));
-      }
-      elseif ($data->is_obsolete) {
-        $message = $value . t(' is obsolete.');
-        if (property_exists($data, 'annotation')) {
-          $replace = '';
-          if (property_exists($data->annotation, 'replacedBy')) {
-            $replace = implode(",",  $data->annotation->replacedBy);
+    if (isset($pieces[1]) && isset($pieces[2])) {
+      $iri = $pieces[1] . ':' . $pieces[2];
+      $ols_url = constant('OLS_URL') . '/ontologies/' . $pieces[0] . '/terms/' . urlencode(urlencode($iri));
+      $request = drupal_http_request($ols_url);
+      if (json_decode($request->data)) {
+        $data = json_decode($request->data);
+        if (isset($data->error)) {
+          form_set_error($element['#field_name'] . '][' . $element['#language'] . '][' . $element['#delta'], $message = t('Ontology error: ') . t($data->message));
+        } elseif ($data->is_obsolete) {
+          $message = $value . t(' is obsolete.');
+          if (property_exists($data, 'annotation')) {
+            $replace = '';
+            if (property_exists($data->annotation, 'replacedBy')) {
+              $replace = implode(",", $data->annotation->replacedBy);
+            }
+            if ($replace != '') {
+              $message .= ' Replaced by: ' . $replace;
+            }
+            $consider = '';
+            if (property_exists($data->annotation, 'consider')) {
+              $consider = implode(',', $data->annotation->consider);
+            }
           }
-          if ($replace != '') {
-            $message .= ' Replaced by: ' . $replace;
+          if ($consider != '') {
+            $message .= ' Please consider: ' . $consider;
           }
-          $consider = '';
-          if (property_exists($data->annotation, 'consider')) {
-            $consider = implode(',',  $data->annotation->consider);
-          }
+          form_set_error($element['#field_name'] . '][' . $element['#language'] . '][' . $element['#delta'], $message);
         }
-        if ($consider != '') {
-          $message .= ' Please consider: ' . $consider;
-        }
-        form_set_error($element['#field_name'] . '][' . $element['#language'] . '][' . $element['#delta'], $message);
+      } else {
+        form_set_error('field_edam', $message = t('An error occurred with EBI Ontology Lookup Service.'));
       }
     }
     else {
-      form_set_error('field_edam', $message = t('An error occurred with EBI Ontology Lookup Service.'));
+      form_set_error('field_edam', $message = $value . t(' is not an ontology id.'));
     }
   }
 }
@@ -249,7 +252,7 @@ function theme_ebi_ols_formatter_default($variables) {
     $pieces = explode(":", $variables['item']['safe_value']);
     if (count($pieces) == 3) {
       $iri = $pieces[1] . ':' . $pieces[2];
-      $ols_url = constant('OLS_URL') . '/' . $pieces[0] . '/terms/' . urlencode(urlencode($iri));
+      $ols_url = constant('OLS_URL') . '/ontologies/' . $pieces[0] . '/terms/' . urlencode(urlencode($iri));
       $options = array(
           'attributes' => array(
               'class' => array('ebi_ols_formatter_default'),

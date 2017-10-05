@@ -1,3 +1,4 @@
+const OLS_URL = 'https://www.ebi.ac.uk/ols/api';
 (function ($) {
 Drupal.behaviors.ebi_ols = {
   attach: function (context) {
@@ -28,19 +29,19 @@ Drupal.behaviors.ebi_ols = {
     $.ui.autocomplete.prototype._renderItem = function (ul, item) {
       return $("<li></li>").data("item.autocomplete", item).append("<a>" + item.label + "</a>").appendTo(ul);
     };
-    var URL_PREFIX = "http://www.ebi.ac.uk/ols/api/select?type=class&ontology=";
+    var url = OLS_URL + "/select?type=class&ontology=";
     $context.find('input.ols-autocomplete').autocomplete ({
       source: function (request, response) {
         var ontology = this.element.attr('ontology');
         var ancestor = this.element.attr('ancestor');
         if (ancestor) {
-          var URL = URL_PREFIX + this.element.attr('ontology') + "&sort=label desc&rows=1000&q=" + this.element.val() + "&allChildrenOf=" + ancestor;
+          url = url + this.element.attr('ontology') + "&sort=label desc&rows=1000&q=" + this.element.val() + "&allChildrenOf=" + ancestor;
         }
         else {
-          var URL = URL_PREFIX + this.element.attr('ontology') + "&sort=label desc&rows=1000&q=" + this.element.val();
+          url = url + this.element.attr('ontology') + "&sort=label desc&rows=1000&q=" + this.element.val();
         }
         $.ajax({
-          url : URL,
+          url : url,
           success : function(data) {
             var suggestions = [];
             var count = 0;
@@ -79,7 +80,7 @@ function iriToURL(iri) {
   var i = iri.indexOf(':');
   var ontology = iri.slice(0,i);
   var id = iri.slice(i+1);
-  var URL = 'http://www.ebi.ac.uk/ols/api/ontologies/' + ontology + '/terms/' + encodeURIComponent(encodeURIComponent(id));
-  return URL;
+  var url = OLS_URL + '/ontologies/' + ontology + '/terms/' + encodeURIComponent(encodeURIComponent(id));
+  return url;
 }
 })(jQuery);
