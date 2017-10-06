@@ -80,7 +80,10 @@ function ebi_ols_field_widget_info() {
     'ebi_ols_textfield' => array(
       'label' => t('Ontology Lookup Service'),
       'field types' => array('text'),
-      'settings' => array('ontology' => ''),
+      'settings' => array(
+        'ontology' => '',
+        'ancestor' => '',
+      ),
       'weight' => 2,
     ),
   );
