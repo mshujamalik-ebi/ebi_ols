@@ -29,16 +29,16 @@ Drupal.behaviors.ebi_ols = {
     $.ui.autocomplete.prototype._renderItem = function (ul, item) {
       return $("<li></li>").data("item.autocomplete", item).append("<a>" + item.label + "</a>").appendTo(ul);
     };
-    var url = OLS_URL + "/select?type=class&ontology=";
     $context.find('input.ols-autocomplete').autocomplete ({
       source: function (request, response) {
         var ontology = this.element.attr('ontology');
         var ancestor = this.element.attr('ancestor');
+        let url = '';
         if (ancestor) {
-          url = url + this.element.attr('ontology') + "&sort=label desc&rows=1000&q=" + this.element.val() + "&allChildrenOf=" + ancestor;
+          url = OLS_URL + "/select?type=class&ontology=" + this.element.attr('ontology') + "&sort=label desc&rows=1000&q=" + this.element.val() + "&allChildrenOf=" + ancestor;
         }
         else {
-          url = url + this.element.attr('ontology') + "&sort=label desc&rows=1000&q=" + this.element.val();
+          url = OLS_URL + "/select?type=class&ontology=" + this.element.attr('ontology') + "&sort=label desc&rows=1000&q=" + this.element.val();
         }
         $.ajax({
           url : url,
