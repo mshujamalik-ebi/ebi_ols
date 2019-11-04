@@ -53,14 +53,14 @@ Drupal.behaviors.ebi_ols = {
                 }
                 var id = data.response.docs[count].ontology_name + ':' + data.response.docs[count].iri;
                 suggestions.push({value: id, label: label});
-								count++
+                count++
               } else {
                 return false;
               }
             });
             if (suggestions.length == 0) {
               $.each(data.response.docs, function(key, value) {
-                suggestions.push({value: value.iri, label: value.label + ' (' + value.iri + ')'});
+                suggestions.push({value: value.ontology_name + ':' + value.iri, label: value.label + ' (' + value.iri + ')'});
               });
             }
             response(suggestions);
