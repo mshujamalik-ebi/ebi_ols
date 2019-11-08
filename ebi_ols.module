@@ -28,6 +28,7 @@ function ebi_ols_menu() {
 function ebi_ols_report() {
   $rows = array();
   $fields = array();
+  $header = array('Content', 'Obsolete terms');
   $field_info = field_info_fields();
   foreach($field_info as $field) {
     foreach($field['bundles'] as $entity_type => $bundles){
@@ -51,17 +52,16 @@ function ebi_ols_report() {
     if (json_decode($request->data)) {
       $terms = array();
       $data = json_decode($request->data);
-      foreach ($data->response->docs as $index=>$doc) {
+      foreach ($data->response->docs as $index => $doc) {
         $term[] = $check['ontology'] . ':' . $doc->iri;
       }
       $result = db_select($check['db_table'], 'f')
         ->fields('f')
         ->condition($check['db_col'], $term, 'IN')
         ->execute();
-      $header = array('Content', 'Obsolete terms');
-      while($record = $result->fetchAssoc()) {
+      while ($record = $result->fetchAssoc()) {
         $entity = l($record['entity_type'] . ' ' . $record['entity_id'], $record['entity_type'] . '/' . $record['entity_id']);
-        $row =  array($entity, $record[$check['db_col']]);
+        $row = array($entity, $record[$check['db_col']]);
         $rows[] = $row;
       }
     }
@@ -123,7 +123,7 @@ function ebi_ols_field_widget_settings_form($field, $instance) {
   if (json_decode($request->data)) {
     $data = json_decode($request->data);
     $ontologies = $data->_embedded->ontologies;
-    foreach($ontologies as $ontology) {
+    foreach ($ontologies as $ontology) {
       $options[$ontology->config->namespace] = $ontology->config->preferredPrefix . ': ' . $ontology->config->title;
     }
   }
