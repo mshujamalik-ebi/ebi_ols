@@ -1,0 +1,10 @@
+type: module
+name: EBI Ontology Lookup
+description: An Ontology Lookup Service autocomplete widget and a Ontology display for text field.
+package: EBI
+core: 8.x
+dependencies:
+  - drupal:text
+configure: ebi_ols.admin_settings
+tags:
+  - EBI
