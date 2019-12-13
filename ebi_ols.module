@@ -1,5 +1,5 @@
 <?php
-define('OLS_URL', 'https://www.ebi.ac.uk/ols/api');
+const EBI_OLS_ENDPOINT = 'https://www.ebi.ac.uk/ols/api';
 
 function ebi_ols_permission() {
   return array(
@@ -202,72 +202,16 @@ function ebi_ols_element_validate($element, &$form_state, $form) {
 }
 
 /**
- * Implements hook_field_formatter_info().
- */
-function ebi_ols_field_formatter_info() {
-  return array(
-    'ebi_ols_default' => array(
-      'label' => t('EBI Ontology Lookup Service'),
-      'description' => 'Display text field with Ontology Lookup Service.',
-      'field types' => array('text'),
-      'weight' => 2,
-      'settings' => array(
-      ),
-    ),
-  );
-}
-
-/**
- * Implements hook_field_formatter_view().
- */
-function ebi_ols_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-  $element = array();
-  $settings = $display['settings'];
-  switch ($display['type']) {
-    case 'ebi_ols_default':
-      foreach ($items as $delta => $item) {
-        $element[$delta] = array(
-          '#theme' => 'ebi_ols_formatter_default',
-          '#item' => $item,
-        );
-      }
-      break;
-  }
-  return $element;
-}
-
-/**
  * Implements hook_theme().
  */
-function ebi_ols_theme() {
-  $theme = array(
-    'ebi_ols_formatter_default' => array(
-      'variables' => array(
-        'item' => NULL,
-      ),
-    ),
-  );
+/*
+function ebi_ols_theme($existing, $type, $theme, $path) {
+  $theme = [];
+  $theme['ebi_ols_formatter_default'] = [
+    'variables' => [
+      'item' => NULL,
+    ],
+  ];
   return $theme;
 }
-
-function theme_ebi_ols_formatter_default($variables) {
-  if ($variables['item']['safe_value']) {
-    $pieces = explode(":", $variables['item']['safe_value']);
-    if (count($pieces) == 3) {
-      $iri = $pieces[1] . ':' . $pieces[2];
-      $ols_url = constant('OLS_URL') . '/ontologies/' . $pieces[0] . '/terms/' . urlencode(urlencode($iri));
-      $options = array(
-          'attributes' => array(
-              'class' => array('ebi_ols_formatter_default'),
-              'ols_url' => array($ols_url),
-          ),
-      );
-      drupal_add_library('system', 'ui.autocomplete');
-      drupal_add_js(drupal_get_path('module', 'ebi_ols') . '/ebi_ols.js');
-      return l($variables['item']['safe_value'], $iri, $options);
-    }
-    else {
-      return $variables['item']['safe_value'];
-    }
-  }
-}
+*/
