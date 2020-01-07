@@ -1,0 +1,17 @@
+field.widget.settings.ebi_ols_textfield:
+  type: mapping
+  label: 'EBI OLS text field widget settings'
+  mapping:
+    ontology:
+      type: text
+      label: 'Ontology'
+    ancestor:
+      type: text
+      label: 'Ancestor'
+field.formatter.settings.ebi_ols:
+  type: mapping
+  label: 'EBI OLS text field formatter settings'
+  mapping:
+    obsolete_notice:
+      type: boolean
+      label: 'Obsolete notice'
