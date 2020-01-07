@@ -9,7 +9,7 @@ Drupal.behaviors.ebi_ols = {
         url : iriToURL($(element).text()),
         success : function(data) {
           $(element).text(data.label);
-          if (data.is_obsolete) {
+          if ($(element).hasClass('obsolete_notice') && data.is_obsolete) {
             $(element).after(' <span class="marker">obsolete</span>');
           }
         },

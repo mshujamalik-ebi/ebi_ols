@@ -1,10 +1,10 @@
 <?php
 namespace Drupal\ebi_ols\Plugin\Field\FieldWidget;;
 
+use GuzzleHttp\Exception\RequestException;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\Plugin\Field\FieldWidget\StringTextfieldWidget;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Component\Serialization\Json;
 
 /**
 * @FieldWidget(
@@ -33,16 +33,16 @@ class OlsFieldWidget extends StringTextfieldWidget {
     $options = [];
     try {
       $response = \Drupal::httpClient()->get(EBI_OLS_ENDPOINT . '/ontologies?size=10000000');
-      $data = (string) $response->getBody();
-      if (empty($data)) {
+      $body = $response->getBody();
+      if (empty($body)) {
         \Drupal::messenger()->addMessage(t('An error occurred with EBI Ontology Lookup Service.'), 'error');
         return FALSE;
       }
       else {
-        $decoded = Json::decode($data);
-        $ontologies = $decoded['_embedded']['ontologies'];
+        $decoded = json_decode($body);
+        $ontologies = $decoded->_embedded->ontologies;
         foreach ($ontologies as $ontology) {
-          $options[$ontology['config']['namespace']] = $ontology['config']['preferredPrefix'] . ': ' . $ontology['config']['title'];
+          $options[$ontology->config->namespace] = $ontology->config->preferredPrefix . ': ' . $ontology->config->title;
         }
       }
     }
@@ -90,7 +90,56 @@ class OlsFieldWidget extends StringTextfieldWidget {
     $main_widget['value']['#attributes']['class'][] = 'ebi-ols-autocomplete';
     $main_widget['value']['#attributes']['ontology'] = $this->getSetting('ontology');
     $main_widget['value']['#attributes']['ancestor'] = $this->getSetting('ancestor');
+    $main_widget['value']['#element_validate'] = [
+      [static::class, 'validate'],
+    ];
     return $main_widget;
   }
-
+  /**
+   * Validate the text field.
+   */
+  public static function validate($element, FormStateInterface $form_state) {
+    $value = $element['#value'];
+    if ($value) {
+      $pieces = explode(":", $value);
+      if (isset($pieces[1]) && isset($pieces[2])) {
+        $iri = $pieces[1] . ':' . $pieces[2];
+        $ols_url = EBI_OLS_ENDPOINT . '/ontologies/' . $pieces[0] . '/terms/' . urlencode(urlencode($iri));
+        try {
+          $response = \Drupal::httpClient()->get($ols_url);
+          $body = $response->getBody();
+          $data = json_decode($body);
+          if (isset($data->error)) {
+            $message = t('Ontology error: ') . t($data->message);
+            $form_state->setError($element, $message);
+          } elseif ($data->is_obsolete) {
+            $message = $value . t(' is obsolete.');
+            if (property_exists($data, 'annotation')) {
+              $replace = '';
+              if (property_exists($data->annotation, 'replacedBy')) {
+                $replace = implode(",", $data->annotation->replacedBy);
+              }
+              if ($replace != '') {
+                $message .= ' Replaced by ' . $replace;
+              }
+              $consider = '';
+              if (property_exists($data->annotation, 'consider')) {
+                $consider = implode(',', $data->annotation->consider);
+              }
+            }
+            if ($consider != '') {
+              $message .= ' Please consider using ' . $consider;
+            }
+            $form_state->setError($element, t($message));
+          }
+        }
+        catch(RequestException $e) {
+          $form_state->setError($element, t($e->getMessage()));
+        }
+      }
+      else {
+        $form_state->setError($element, t($value . t(' is not an ontology id.')));
+      }
+    }
+  }
 }
