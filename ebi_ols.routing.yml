@@ -1,0 +1,7 @@
+ebi_ols.report:
+  path: 'admin/reports/ebi_ols'
+  defaults:
+    _controller: '\Drupal\ebi_ols\Controller\ReportController::obsoleteOverview'
+    _title: 'EBI Ontology lookup service obsolete terms'
+  requirements:
+    _permission: 'access obsolete report'

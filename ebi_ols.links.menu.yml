@@ -1,0 +1,6 @@
+ebi_ols.report:
+  title: 'EBI Ontology lookup service obsolete terms'
+  description: 'View obsolete ontology terms in text fields'
+  parent: system.admin_reports
+  route_name: ebi_ols.report
+  enabled: 1
