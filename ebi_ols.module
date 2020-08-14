@@ -16,9 +16,8 @@ function ebi_ols_permission() {
 function ebi_ols_menu() {
   $items['admin/config/services/ebi_ols'] = array(
     'title' => 'EBI Ontology Lookup Service',
-    'description' => 'Content with obsolete terms. ',
+    'description' => 'Content with obsolete terms.',
     'page callback' => 'ebi_ols_report',
-    'page arguments' => array('transliteration_retroactive'),
     'access arguments' => array('access obsolete report'),
     'type' => MENU_NORMAL_ITEM,
   );
