@@ -2,4 +2,4 @@ default:
   js:
     js/ebi_ols.js: {}
   dependencies:
-    - drupal.autocomplete
+    - core/drupal.autocomplete
